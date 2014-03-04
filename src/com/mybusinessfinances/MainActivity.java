@@ -87,6 +87,9 @@ public class MainActivity extends Activity {
 		populateList();
 	}
 
+	/**
+	 * Creates the 3 
+	 */
 	private void populateTabs() {
 		TabHost tabhost = (TabHost) findViewById(R.id.tabhost);
 		tabhost.setup();
@@ -185,14 +188,15 @@ public class MainActivity extends Activity {
 			        sendToDB();
 			        System.out.println("came back from DataBase");
 			        
-				    aa.notifyDataSetChanged();
+			     //   expenses.add(new ExpenseItem(inputExpense, inputCost));
+				//    aa.notifyDataSetChanged();
 
 				    
 			       
-					expenses0.setAdapter(aa);
+				/*	expenses0.setAdapter(aa);
 					expenses1.setAdapter(aa);
 					expenses2.setAdapter(aa);
-					populateList();
+					populateList();*/
 
 		        }
 		    });
@@ -209,7 +213,9 @@ public class MainActivity extends Activity {
 	protected void sendToDB() {
 		ExpenseItem newExpense = new ExpenseItem(inputExpense, inputCost);
         dbAdapt.insertExpense(newExpense);
+        expenses.add(newExpense);
         aa.add(newExpense);
+        sortList(expenses, "abc");
 	    aa.notifyDataSetChanged();
         populateList();
 	}
