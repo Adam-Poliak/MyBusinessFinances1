@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -55,7 +56,31 @@ public class MainActivity extends Activity {
 		expenses2 = (ListView) findViewById(R.id.expense_list2);
 		
 		expenses = new ArrayList<ExpenseItem>();
+		System.out.println("this is = " + this);
 		aa = new ArrayAdapter<ExpenseItem>(this, android.R.layout.simple_list_item_1, expenses);
+		expenses0.setAdapter(aa);
+		expenses1.setAdapter(aa);
+		expenses2.setAdapter(aa);
+		populateList();
+	}
+	
+	protected void onResume() {
+		super.onResume();
+	setContentView(R.layout.activity_main);
+	
+	System.out.println("Onserume");
+		
+		populateTabs();
+		 
+		dbAdapt = new ExpensedbAdaptor(this);
+		dbAdapt.open();		
+	
+		expenses0 = (ListView) findViewById(R.id.expense_list0);
+		expenses1 = (ListView) findViewById(R.id.expense_list1);
+		expenses2 = (ListView) findViewById(R.id.expense_list2);
+		
+		expenses = new ArrayList<ExpenseItem>();
+		aa.notifyDataSetChanged();
 		expenses0.setAdapter(aa);
 		expenses1.setAdapter(aa);
 		expenses2.setAdapter(aa);
@@ -162,6 +187,7 @@ public class MainActivity extends Activity {
 			        
 				    aa.notifyDataSetChanged();
 
+				    
 			       
 					expenses0.setAdapter(aa);
 					expenses1.setAdapter(aa);
@@ -183,6 +209,7 @@ public class MainActivity extends Activity {
 	protected void sendToDB() {
 		ExpenseItem newExpense = new ExpenseItem(inputExpense, inputCost);
         dbAdapt.insertExpense(newExpense);
+        aa.add(newExpense);
 	    aa.notifyDataSetChanged();
         populateList();
 	}
