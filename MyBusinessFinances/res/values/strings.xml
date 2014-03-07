@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">MyBusinessFinances</string>
+    <string name="app_name">My Business Finances</string>
     <string name="action_settings">Settings</string>
     <string name="abc">Alphabetical</string>
     <string name="asc">Ascending</string>
@@ -12,5 +12,6 @@
     <string name="cancel">Cancel</string>
     <string name="exp_name">Expense Name:</string>
     <string name="exp_price">Expense Price:</string>
+    <string name="no_items">Add an item</string>
 
 </resources>

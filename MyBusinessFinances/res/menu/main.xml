@@ -7,7 +7,7 @@
         android:title="@string/action_settings"/>
  	 <item
         android:id="@+id/add"
-        android:icon="@drawable/plus"
+        android:icon="@android:drawable/ic_menu_add"
         android:title="@string/add"
         android:showAsAction="always"
         />

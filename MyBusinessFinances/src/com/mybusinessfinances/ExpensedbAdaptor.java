@@ -32,7 +32,7 @@ public class ExpensedbAdaptor {
     }
  
     public void open() throws SQLiteException {
-        try {
+    	try {
             db = dbHelper.getWritableDatabase();
         } catch (SQLiteException ex) {
             db = dbHelper.getReadableDatabase();
@@ -66,19 +66,6 @@ public class ExpensedbAdaptor {
         }
         return result;
     }
-     
-    //Dont think we need to get an individual expense Item for now
-  /*  public ExpenseItem getExpenseItem(long ri) throws SQLException {
-        Cursor cursor = db.query(true, EXPENSE_TABLE, EXP_COLS, EXP_ID+"="+ri, null, null, null, null, null);
-        if ((cursor.getCount() == 0) || !cursor.moveToFirst()) {
-            throw new SQLException("No course items found for row: " + ri);
-        }
-        // must use column indices to get column values
-        int whatIndex = cursor.getColumnIndex(EXP_NAME);
-        ExpenseItem result = new ExpenseItem(cursor.getString(whatIndex), cursor.getString(2), cursor.getFloat(3), cursor.getString(4));
-        return result;
-    } */
- 
  
     private static class ExpensedbHelper extends SQLiteOpenHelper {
  

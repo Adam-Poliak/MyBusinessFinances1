@@ -1,33 +1,33 @@
 package com.mybusinessfinances;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Locale;
 
-import android.app.Activity;
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
 import android.app.AlertDialog;
+import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Handler;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.ListFragment;
+import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ListView;
-import android.widget.TabHost;
-import android.widget.TabHost.TabContentFactory;
-import android.widget.TabHost.TabSpec;
-import android.widget.TabWidget;
-import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 	
-	private ListView expenses0;
-	private ListView expenses1;
-	private ListView expenses2;
 	protected static ArrayList<ExpenseItem> expenses;
 	protected static ArrayAdapter<ExpenseItem> aa;
 	
@@ -39,75 +39,178 @@ public class MainActivity extends Activity {
 	private String inputCost;
 	private String inputExpense;
 	
+    private ViewPager mViewPager;
+    private MyAdapter mAdapter;
+    
+    private String sortType;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.view_pager);
 		
-		populateTabs();
-		 
 		dbAdapt = new ExpensedbAdaptor(this);
 		dbAdapt.open();
+		this.sortType = "abc";
+	}
+	
+	public static class MyAdapter extends FragmentPagerAdapter {
+		private static int NUM_LISTS = 3;
 		
-		expenses0 = (ListView) findViewById(R.id.expense_list0);
-		expenses1 = (ListView) findViewById(R.id.expense_list1);
-		expenses2 = (ListView) findViewById(R.id.expense_list2);
+		public MyAdapter(FragmentManager fm) {
+			super(fm);
+		}
+
+		@Override
+		public Fragment getItem(int position) {
+			return ArrayListFragment.newInstance(position);
+		}
+
+		@Override
+		public int getCount() {
+			return NUM_LISTS;
+		}
 		
+		@Override
+	    public CharSequence getPageTitle(int position) {
+	        if (position == 1) {
+	        	return "Alphabetical";
+	        } else if (position == 2) {
+	        	return "Descending";
+	        } else if (position == 3) {
+	        	return "Ascending";
+	        } else {
+	        	return null;
+	        }
+	    }
+	}
+	
+	public static class ArrayListFragment extends ListFragment {
+	    int mNum;
+
+	    /**
+	     * Create a new instance of CountingFragment, providing "num"
+	     * as an argument.
+	     */
+	    static ArrayListFragment newInstance(int num) {
+	        ArrayListFragment f = new ArrayListFragment();
+
+	        // Supply num input as an argument.
+	        Bundle args = new Bundle();
+	        args.putInt("num", num);
+	        f.setArguments(args);
+
+	        return f;
+	    }
+	    
+	    /**
+	     * When creating, retrieve this instance's number from its arguments.
+	     */
+	    @Override
+	    public void onCreate(Bundle savedInstanceState) {
+	        super.onCreate(savedInstanceState);
+	        mNum = getArguments() != null ? getArguments().getInt("num") : 1;
+	    }
+
+	    /**
+	     * The Fragment's UI is just a simple text view showing its
+	     * instance number.
+	     */
+	    @Override
+	    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+	            Bundle savedInstanceState) {
+	        View v = inflater.inflate(R.layout.list_fragment, container, false);
+	        return v;
+	    }
+
+	    @Override
+	    public void onActivityCreated(Bundle savedInstanceState) {
+	        super.onActivityCreated(savedInstanceState);
+	        setListAdapter(aa);
+	    }
+
+	    @Override
+	    public void onListItemClick(ListView l, View v, int position, long id) {
+	        Log.i("FragmentList", "Item clicked: " + id);
+	    }
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+
 		expenses = new ArrayList<ExpenseItem>();
 		aa = new ArrayAdapter<ExpenseItem>(this, android.R.layout.simple_list_item_1, expenses);
-		expenses0.setAdapter(aa);
-		expenses1.setAdapter(aa);
-		expenses2.setAdapter(aa);
-		populateList();
-	}
+		
+		// Set up tabs
+		mAdapter = new MyAdapter(getSupportFragmentManager());
+        mViewPager = (ViewPager)findViewById(R.id.pager);
+        mViewPager.setAdapter(mAdapter);
+	    mViewPager.setOnPageChangeListener(
+	            new ViewPager.SimpleOnPageChangeListener() {
+	                @Override
+	                public void onPageSelected(int position) {
+	                    // When swiping between pages, select the
+	                    // corresponding tab.
+	                    getActionBar().setSelectedNavigationItem(position);
+	                }
+	            });
+		
+		final ActionBar actionBar = getActionBar();
+		
+		// Specify that tabs should be displayed in the action bar.
+	    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+	    
+	    // Create a tab listener that is called when the user changes tabs.
+	    ActionBar.TabListener tabListener = new ActionBar.TabListener() {
+	    	@Override
+			public void onTabSelected(Tab tab, FragmentTransaction ft) {
+	    		mViewPager.setCurrentItem(tab.getPosition());
+	    		if (tab.getText().equals("Alphabetical")) {
+	    			sortType = "abc";
+	    		} else if (tab.getText().equals("Descending")) {
+	    			sortType = "desc";
+	    		} else if (tab.getText().equals("Ascending")) {
+	    			sortType = "asc";
+	    		}
+	    		populateList();
+			}
+	    	@Override
+			public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+				// hide the given tab
+			}
+	    	@Override
+			public void onTabReselected(Tab tab, FragmentTransaction ft) {
+				// ignore
+			}
+	    };
 
-	private void populateTabs() {
-		TabHost tabhost = (TabHost) findViewById(R.id.tabhost);
-		tabhost.setup();
+	    // Create Tabs
 		
-		final TabWidget tabWidget = tabhost.getTabWidget();
-		final FrameLayout tabContent = tabhost.getTabContentView();
-		
-		// Get the original tab textviews and remove them from the viewgroup.
-				TextView[] originalTextViews = new TextView[tabWidget.getTabCount()];
-				for (int index = 0; index < tabWidget.getTabCount(); index++) {
-					originalTextViews[index] = (TextView) tabWidget.getChildTabViewAt(index);
-				}
-				tabWidget.removeAllViews();
-				
-				// Ensure that all tab content childs are not visible at startup.
-				for (int index = 0; index < tabContent.getChildCount(); index++) {
-					tabContent.getChildAt(index).setVisibility(View.GONE);
-				}
-				
-				// Create the tabspec based on the textview childs in the xml file.
-				// Or create simple tabspec instances in any other way...
-				for (int index = 0; index < originalTextViews.length; index++) {
-					final TextView tabWidgetTextView = originalTextViews[index];
-					final View tabContentView = tabContent.getChildAt(index);
-					TabSpec tabSpec = tabhost.newTabSpec((String) tabWidgetTextView.getTag());
-					tabSpec.setContent(new TabContentFactory() {
-						@Override
-						public View createTabContent(String tag) {
-							return tabContentView;
-						}
-					});
-					if (tabWidgetTextView.getBackground() == null) {
-						tabSpec.setIndicator(tabWidgetTextView.getText());
-					} else {
-						tabSpec.setIndicator(tabWidgetTextView.getText(), tabWidgetTextView.getBackground());
-					}
-					tabhost.addTab(tabSpec);
-				}
+		ActionBar.Tab tab1 = actionBar.newTab();
+	    tab1.setText("Alphabetical");
+	    tab1.setTabListener(tabListener);
+	    ActionBar.Tab tab2 = actionBar.newTab();
+	    tab2.setText("Descending");
+	    tab2.setTabListener(tabListener);
+	    ActionBar.Tab tab3 = actionBar.newTab();
+	    tab3.setText("Ascending");
+	    tab3.setTabListener(tabListener);
+	    
+	    actionBar.addTab(tab1);
+	    actionBar.addTab(tab2);
+	    actionBar.addTab(tab3);
+		populateList();
 	}
 	
 	private void populateList() {
 		eCursor = dbAdapt.getAllExpenses();
 		startManagingCursor(eCursor);
-		updateArray("abc");
+		eCursor.requery();
+		updateArray();
 	}
 
-	private void updateArray(String sortType) {
+	private void updateArray() {
 		eCursor.requery();
 		expenses.clear();
 		if(eCursor.moveToFirst()) {
@@ -117,7 +220,7 @@ public class MainActivity extends Activity {
 			} while (eCursor.moveToNext());
 			aa.notifyDataSetChanged();
 		}
-		expenses = sortList(expenses, sortType);
+		sortList();
 		aa.notifyDataSetChanged();
 	}
 
@@ -152,9 +255,7 @@ public class MainActivity extends Activity {
 		        	expenseName = (EditText) v.findViewById(R.id.name_input);
 		            expenseCost = (EditText) v.findViewById(R.id.price_input);
 			        inputExpense = expenseName.getText().toString();
-			        System.out.println(inputExpense);
 			        inputCost = expenseCost.getText().toString();
-			        System.out.println(inputCost);
 			        sendToDB();
 		        }
 		    });
@@ -162,6 +263,7 @@ public class MainActivity extends Activity {
 	            public void onClick(DialogInterface dialog, int whichButton) {
 	            }
 	        });
+	    aa.notifyDataSetChanged();
 	    AlertDialog ad = builder.create();
 	    ad.show(); 
 	}
@@ -170,45 +272,40 @@ public class MainActivity extends Activity {
 	protected void sendToDB() {
 		ExpenseItem newExpense = new ExpenseItem(inputExpense, inputCost);
         dbAdapt.insertExpense(newExpense);
+        expenses.add(newExpense);
+        aa.add(newExpense);
+	    aa.notifyDataSetChanged();
         populateList();
 	}
 	
-	private ArrayList<ExpenseItem> sortList(ArrayList<ExpenseItem> list, String sortType) {
-		ArrayList<ExpenseItem> sorted = (ArrayList<ExpenseItem>) list.clone();
-		for (ExpenseItem e : list) {
-			System.out.print(e.getExpense() + ", ");
-			System.out.println();
-		}
-		
-		int comp = 0;
-		for (int i = 0; i < list.size(); i++) {   
-		    for (int j = 0; j < list.size()-1; j++) {
-		    	/* if this pair is out of order */
-		    	System.out.println("j: " + list.get(j).getExpense());
-		    	System.out.println("j+1: " + list.get(j+1).getExpense());
-		    	
+	private void sortList() {
+		double comp = 0;
+		for (int i = 0; i < expenses.size(); i++) {   
+		    for (int j = 0; j < expenses.size()-1; j++) {
 		    	if (sortType.equals("abc")) {
-		    		comp = list.get(j).getExpense().compareTo(list.get(j+1).getExpense());
+		    		comp = expenses.get(j).getExpense().toLowerCase(Locale.US)
+		    				.compareTo(expenses.get(j+1).getExpense().toLowerCase(Locale.US));
 		    	} else if (sortType.equals("asc")) {
-		    		comp = list.get(j).getCost().compareTo(list.get(j+1).getCost());
+		    		comp = Double.parseDouble(expenses.get(j).getCost())
+		    				- Double.parseDouble((expenses.get(j+1).getCost()));
 		    	} else if (sortType.equals("desc")) {
-		    		comp = list.get(j+1).getCost().compareTo(list.get(j).getCost());
+		    		comp = Double.parseDouble(expenses.get(j+1).getCost())
+		    				- Double.parseDouble((expenses.get(j).getCost()));
 		    	}
 		    	
+		    	/* if this pair is out of order */
 		    	if (comp > 0) {
 		    		/* swap them and remember something changed */
-		    		swap(list, j, j+1);
-		    		System.out.println("swap");
+		    		swap(j, j+1);
 		    	}
 		     }
 		}
-		return sorted;
 	}
 	
-	private void swap(ArrayList<ExpenseItem> list, int i, int j) {
-		ExpenseItem swapped = list.get(i);
-		list.remove(i);
-		list.add(j, swapped);
+	private void swap(int i, int j) {
+		ExpenseItem swapped = expenses.get(i);
+		expenses.remove(i);
+		expenses.add(j, swapped);
 	}
 
 	@Override
